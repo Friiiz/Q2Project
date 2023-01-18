@@ -6,63 +6,64 @@ import java.util.*;
 
 public class Network {
     private final double LEARNING_RATE;
+    private final int BATCH_SIZE;
+    private final Neuron[][] LAYERS;
 
-    private final Node[][] LAYERS;
-
-    public Network(double learningRate, int inputLayerSize, int outputLayerSize, int... hiddenLayerSizes) {
+    public Network(double learningRate, int batchSize, int inputLayerSize, int outputLayerSize, int... hiddenLayerSizes) {
         LEARNING_RATE = learningRate;
-        LAYERS = new Node[1 + hiddenLayerSizes.length + 1][];
+        BATCH_SIZE = batchSize;
+        LAYERS = new Neuron[1 + hiddenLayerSizes.length + 1][];
         for (int l = 0; l < LAYERS.length; l++) {
             if (l == 0) {
                 //creating input layer
-                Node[] inputLayerNodes = new Node[inputLayerSize];
-                Arrays.setAll(inputLayerNodes, node -> new Node(Node.NodeType.INPUT, null));
-                LAYERS[l] = inputLayerNodes;
+                Neuron[] inputLayerNeurons = new Neuron[inputLayerSize];
+                Arrays.setAll(inputLayerNeurons, node -> new Neuron(Neuron.NodeType.INPUT, null, BATCH_SIZE));
+                LAYERS[l] = inputLayerNeurons;
                 System.out.println("Input layer created with " + inputLayerSize + " nodes.");
                 continue;
             }
             if (l == LAYERS.length - 1) {
                 //creating output layer
-                Node[] outputLayerNodes = new Node[outputLayerSize];
+                Neuron[] outputLayerNeurons = new Neuron[outputLayerSize];
                 int nodeIndex = 0;
                 //adding nodes for numbers
                 for (int i = 48; i <= 57; i++) {
-                    outputLayerNodes[nodeIndex] = new Node(Node.NodeType.OUTPUT, (char) i);
+                    outputLayerNeurons[nodeIndex] = new Neuron(Neuron.NodeType.OUTPUT, (char) i, BATCH_SIZE);
                     nodeIndex++;
                 }
 
                 //adding nodes for uppercase letters
                 for (int i = 65; i <= 90; i++) {
-                    outputLayerNodes[nodeIndex] = new Node(Node.NodeType.OUTPUT, (char) i);
+                    outputLayerNeurons[nodeIndex] = new Neuron(Neuron.NodeType.OUTPUT, (char) i, BATCH_SIZE);
                     nodeIndex++;
                 }
 
                 //adding nodes for lowercase letters
                 for (int i = 97; i <= 122; i++) {
-                    outputLayerNodes[nodeIndex] = new Node(Node.NodeType.OUTPUT, (char) i);
+                    outputLayerNeurons[nodeIndex] = new Neuron(Neuron.NodeType.OUTPUT, (char) i, BATCH_SIZE);
                     nodeIndex++;
                 }
 
-                LAYERS[LAYERS.length - 1] = outputLayerNodes;
+                LAYERS[LAYERS.length - 1] = outputLayerNeurons;
                 System.out.println("Output layer created with " + outputLayerSize + " nodes.");
                 continue;
             }
 
             //creating hidden layers
-            Node[] hiddenLayerNodes = new Node[hiddenLayerSizes[l - 1]];
-            Arrays.setAll(hiddenLayerNodes, node -> new Node(Node.NodeType.HIDDEN, null));
-            LAYERS[l] = hiddenLayerNodes;
+            Neuron[] hiddenLayerNeurons = new Neuron[hiddenLayerSizes[l - 1]];
+            Arrays.setAll(hiddenLayerNeurons, node -> new Neuron(Neuron.NodeType.HIDDEN, null, BATCH_SIZE));
+            LAYERS[l] = hiddenLayerNeurons;
             System.out.println("Hidden layer created with " + hiddenLayerSizes[l - 1] + " nodes.");
         }
 
         //connecting nodes
         Random random = new Random();
         for (int l = 1; l < LAYERS.length; l++) {
-            Node[] layer = LAYERS[l];
-            for (Node node : layer) {
-                Node[] previousLayer = LAYERS[l - 1];
-                for (Node previousNode : previousLayer) {
-                    node.addInputNode(previousNode, random.nextGaussian(0, Math.sqrt(1.0d / previousLayer.length)));
+            Neuron[] layer = LAYERS[l];
+            for (Neuron neuron : layer) {
+                Neuron[] previousLayer = LAYERS[l - 1];
+                for (Neuron previousNeuron : previousLayer) {
+                    neuron.addInputNode(previousNeuron, random.nextGaussian(0, Math.sqrt(1.0d / previousLayer.length)));
                 }
             }
         }
@@ -95,7 +96,6 @@ public class Network {
         }
         LinkedHashMap<double[], Character> trainingData = fileHandler.getTrainingData();
         System.out.println("Training network.");
-        int batchSize = 32;
         int totalPairs = 0;
         int successfulPairs = 0;
         double successRate;
@@ -110,7 +110,7 @@ public class Network {
                 compute(trainingPair.getKey(), trainingPair.getValue());
 
                 //finding the highest value in output layer
-                Node maxValue = Arrays.stream(LAYERS[LAYERS.length - 1]).max(Comparator.comparing(Node::getActivation)).orElseThrow();
+                Neuron maxValue = Arrays.stream(LAYERS[LAYERS.length - 1]).max(Comparator.comparing(Neuron::getActivation)).orElseThrow();
 
                 //track success
                 totalPairs++;
@@ -119,16 +119,18 @@ public class Network {
                 }
 
                 //adjusting parameters after every batch
-                if (totalPairs % batchSize == 0) {
-                    System.out.println("Adjusting parameters for batch " + totalPairs / batchSize + " in epoch " + (i + 1));
-                    for (Node[] layer : LAYERS) {
-                        for (Node node : layer) {
+                if (totalPairs % BATCH_SIZE == 0) {
+                    System.out.println("Adjusting parameters for batch " + totalPairs / BATCH_SIZE + " in epoch " + (i + 1));
+                    for (Neuron[] layer : LAYERS) {
+                        for (Neuron neuron : layer) {
                             //nudge parameters
-                            node.nudgeWeights(LEARNING_RATE);
-                            node.nudgeBias(LEARNING_RATE);
+                            neuron.nudgeWeights(LEARNING_RATE);
+                            neuron.nudgeBias(LEARNING_RATE);
+                            neuron.nudgeBeta(LEARNING_RATE);
+                            neuron.nudgeGamma(LEARNING_RATE);
 
                             //clear gradients for next batch
-                            node.clearGradients();
+                            neuron.clearGradients();
                         }
                     }
 
@@ -142,7 +144,7 @@ public class Network {
 
     public void compute(double[] image, char label) {
         //setting values for all nodes in input layer
-        Node[] layer = LAYERS[0];
+        Neuron[] layer = LAYERS[0];
         for (int i = 0; i < layer.length; i++) {
             layer[i].setActivation(image[i]);
         }
@@ -151,15 +153,15 @@ public class Network {
         for (int i = 1; i < LAYERS.length; i++) {
             layer = LAYERS[i];
             //compute values for all nodes
-            for (Node node : layer) {
-                node.compute();
+            for (Neuron neuron : layer) {
+                neuron.compute();
             }
 
             //apply softmax to output layer
             if (i == LAYERS.length - 1) {
-                double sumPowers = Arrays.stream(layer).mapToDouble(node -> Math.pow(Math.E, node.getActivation())).sum();
-                for (Node node : layer) {
-                    node.setActivation(Math.pow(Math.E, node.getActivation()) / sumPowers);
+                double sumPowers = Arrays.stream(layer).mapToDouble(neuron -> Math.pow(Math.E, neuron.getActivation())).sum();
+                for (Neuron neuron : layer) {
+                    neuron.setActivation(Math.pow(Math.E, neuron.getActivation()) / sumPowers);
                 }
             }
         }
@@ -170,17 +172,20 @@ public class Network {
 
     public void backPropagate(char label) {
         //calculate gradients for output layer
-        for (Node node : LAYERS[LAYERS.length - 1]) {
-            node.addWeightGradients(node.getNodeLabel() == label ? 1 : 0);
-            node.addBiasGradient(node.getNodeLabel() == label ? 1 : 0);
+        for (Neuron neuron : LAYERS[LAYERS.length - 1]) {
+            double expectedActivation = neuron.getNodeLabel() == label ? 1 : 0;
+            neuron.addWeightGradients(expectedActivation);
+            neuron.addBiasGradient(expectedActivation);
         }
 
         //calculate gradients for hidden layers
         for (int i = LAYERS.length - 2; i > 0; i--) {
-            Node[] layer = LAYERS[i];
-            for (Node node : layer) {
-                node.addWeightGradients(-1);
-                node.addBiasGradient(-1);
+            Neuron[] layer = LAYERS[i];
+            for (Neuron neuron : layer) {
+                neuron.addWeightGradients(-1);
+                neuron.addBiasGradient(-1);
+                neuron.addBetaGradient(-1);
+                neuron.addGammaGradient(-1);
             }
         }
     }

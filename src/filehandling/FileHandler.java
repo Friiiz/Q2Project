@@ -25,8 +25,8 @@ public class FileHandler {
 
     public void loadFiles() throws InterruptedException {
         System.out.println("Loading and compressing data...");
-
-        for (File folder : Objects.requireNonNull(new File("NIST Handwritten Forms and Characters Database").listFiles(), "No folders found in " + new File("NIST Handwritten Forms and Characters Database").getAbsolutePath())) {
+        File database = new File("C:\\Users\\Friiiz\\Documents\\NIST Handwritten Forms and Characters Database");
+        for (File folder : Objects.requireNonNull(database.listFiles(), "No folders found in " + database.getAbsolutePath())) {
             Runnable fileLoader = () -> {
                 for (File file : Objects.requireNonNull(new File(folder + "/train_" + folder.getName()).listFiles(), "No file found in " + folder.getAbsolutePath())) {
                     BufferedImage image;

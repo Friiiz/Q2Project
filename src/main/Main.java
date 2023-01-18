@@ -11,11 +11,11 @@ https://en.wikipedia.org/wiki/Backtracking
 
 package main;
 
-import ann.Network;
+import network.Network;
 
 public class Main {
     public static void main(String[] args) {
-        Network network = new Network(0.01, 1024, 62);
+        Network network = new Network(0.01, 100, 1024, 62);
         network.train();
     }
 }
