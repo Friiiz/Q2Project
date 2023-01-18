@@ -11,11 +11,13 @@ https://en.wikipedia.org/wiki/Backtracking
 
 package main;
 
+import gui.GUI;
 import network.Network;
 
 public class Main {
     public static void main(String[] args) {
-        Network network = new Network(0.01, 100, 1024, 62);
-        network.train();
+        GUI gui = new GUI();
+        //Network network = new Network(0.01, 100, 1024, 62);
+        //network.train();
     }
 }
