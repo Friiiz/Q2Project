@@ -15,13 +15,13 @@ public class DrawingPane extends JPanel implements MouseListener {
     private final int DRAWING_RESOLUTION;
     private final LinkedList<LinkedList<Point>> DRAWN_STROKES;
 
-    public DrawingPane(int x, int y, int width, int height) {
-        setBounds(x, y, width, height);
+    public DrawingPane(int width, int height) {
+        //setPreferredSize(new Dimension(width, height));
         addMouseListener(this);
         setFocusable(true);
         grabFocus();
         setFocusTraversalKeysEnabled(false);
-        setBackground(Color.WHITE);
+        setBackground(Color.BLACK);
         DRAWING_RESOLUTION = 5;
         DRAWN_STROKES = new LinkedList<>();
         leftClickPressed = false;
