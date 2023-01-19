@@ -42,6 +42,7 @@ public class FileHandler {
                     byte[][] uncompressed = new byte[image.getWidth()][image.getHeight()];
                     double[] compressedImage = new double[1024];
 
+                    //TODO: regularize images
                     for (int y = 0; y < image.getHeight(); y++) {
                         for (int x = 0; x < image.getWidth(); x++) {
                             uncompressed[x][y] = (byte) (image.getRGB(x, y) / -16777215.0d - 0.0000000596046473d);

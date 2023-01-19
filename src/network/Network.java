@@ -159,9 +159,9 @@ public class Network {
 
             //apply softmax to output layer
             if (i == LAYERS.length - 1) {
-                double sumPowers = Arrays.stream(layer).mapToDouble(neuron -> Math.pow(Math.E, neuron.getActivation())).sum();
+                double sumPowers = Arrays.stream(layer).mapToDouble(neuron -> Math.exp(neuron.getActivation())).sum();
                 for (Neuron neuron : layer) {
-                    neuron.setActivation(Math.pow(Math.E, neuron.getActivation()) / sumPowers);
+                    neuron.setActivation(Math.exp(neuron.getActivation()) / sumPowers);
                 }
             }
         }
