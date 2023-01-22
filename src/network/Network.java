@@ -1,10 +1,12 @@
 package network;
 
-import filehandling.FileHandler;
-
+import java.io.*;
+import java.rmi.server.LogStream;
 import java.util.*;
 
-public class Network {
+import static main.Main.FILE_HANDLER;
+
+public class Network implements Serializable {
     private final double LEARNING_RATE;
     private final int BATCH_SIZE;
     private final Neuron[][] LAYERS;
@@ -88,17 +90,21 @@ public class Network {
     }
 
     public void train() {
-        FileHandler fileHandler = new FileHandler();
+
+        //load files
         try {
-            fileHandler.loadFiles();
+            FILE_HANDLER.loadFiles();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        LinkedHashMap<double[], Character> trainingData = fileHandler.getTrainingData();
+        LinkedHashMap<double[], Character> trainingData = FILE_HANDLER.getTrainingData();
+
+        //training network
         System.out.println("Training network.");
         int totalPairs = 0;
         int successfulPairs = 0;
-        double successRate;
+        double successRate = 0;
+        double highestSuccessRate = 0;
 
         //looping through epochs
         for (int i = 0; i < 10; i++) {
@@ -107,7 +113,8 @@ public class Network {
             for (Map.Entry<double[], Character> trainingPair : shuffledTrainingData.entrySet()) {
                 //System.out.println("Evaluating image of character '" + trainingPair.getValue() + "'");
                 //computing output for each pair
-                compute(trainingPair.getKey(), trainingPair.getValue());
+                compute(trainingPair.getKey());
+                backPropagate(trainingPair.getValue());
 
                 //finding the highest value in output layer
                 Neuron maxValue = Arrays.stream(LAYERS[LAYERS.length - 1]).max(Comparator.comparing(Neuron::getActivation)).orElseThrow();
@@ -124,10 +131,10 @@ public class Network {
                     for (Neuron[] layer : LAYERS) {
                         for (Neuron neuron : layer) {
                             //nudge parameters
-                            neuron.nudgeWeights(LEARNING_RATE);
+                            neuron.nudgeWeights(LEARNING_RATE/* * (1 + Math.pow(2, 0.00012 * totalPairs))*/);
                             neuron.nudgeBias(LEARNING_RATE);
-                            neuron.nudgeBeta(LEARNING_RATE);
-                            neuron.nudgeGamma(LEARNING_RATE);
+                            //neuron.nudgeBeta(LEARNING_RATE);
+                            //neuron.nudgeGamma(LEARNING_RATE);
 
                             //clear gradients for next batch
                             neuron.clearGradients();
@@ -136,13 +143,36 @@ public class Network {
 
                     //calculating success rate
                     successRate = (double) successfulPairs / (double) totalPairs;
+                    if(successRate > highestSuccessRate) {
+                        highestSuccessRate = successRate;
+                    }
+
+                    if (successRate > 0.5) {
+                        save(successRate, totalPairs / BATCH_SIZE, i + 1);
+                        return;
+                    }
+
                     System.out.println("Success rate: " + successRate * 100 + "%");
                 }
             }
         }
     }
 
-    public void compute(double[] image, char label) {
+    private void save(double successRate, int batches, int epochs) {
+        try (FileOutputStream fileOutputStream = new FileOutputStream("network.ser")) {
+            ObjectOutputStream outputStream = new ObjectOutputStream(fileOutputStream);
+            outputStream.writeObject(this);
+            outputStream.close();
+            File networkInfo = new File("Network Info.txt");
+            FileWriter writer = new FileWriter(networkInfo);
+            writer.write("Network Info:\nAverage success rate (fluctuates a lot for individual characters): " + successRate * 100 + "%\nTrained for " + batches + " batches in " + epochs + " epochs.");
+            writer.close();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public void compute(double[] image) {
         //setting values for all nodes in input layer
         Neuron[] layer = LAYERS[0];
         for (int i = 0; i < layer.length; i++) {
@@ -165,9 +195,6 @@ public class Network {
                 }
             }
         }
-
-        //propagate gradients backwards once all nodes have computed their values
-        backPropagate(label);
     }
 
     public void backPropagate(char label) {
@@ -184,9 +211,15 @@ public class Network {
             for (Neuron neuron : layer) {
                 neuron.addWeightGradients(-1);
                 neuron.addBiasGradient(-1);
-                neuron.addBetaGradient(-1);
-                neuron.addGammaGradient(-1);
+                //neuron.addBetaGradient(-1);
+                //neuron.addGammaGradient(-1);
             }
         }
+    }
+
+    public Map.Entry<Character, Double> evaluate(double[] image) {
+        compute(image);
+        Neuron maxValue = Arrays.stream(LAYERS[LAYERS.length - 1]).max(Comparator.comparing(Neuron::getActivation)).orElseThrow();
+        return new AbstractMap.SimpleEntry<Character, Double>(maxValue.getNodeLabel(), maxValue.getActivation());
     }
 }

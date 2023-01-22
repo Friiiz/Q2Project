@@ -1,11 +1,12 @@
 package network;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class Neuron {
+public class Neuron implements Serializable {
     //private final Layer LAYER;
 
-    protected enum NodeType {
+    protected enum NodeType implements Serializable {
         INPUT,
         OUTPUT,
         HIDDEN

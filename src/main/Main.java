@@ -11,13 +11,30 @@ https://en.wikipedia.org/wiki/Backtracking
 
 package main;
 
+import filehandling.FileHandler;
 import gui.GUI;
 import network.Network;
 
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 public class Main {
+
+    public static Network NETWORK = new Network(0.01, 100, 1024, 62);
+    public static final FileHandler FILE_HANDLER = new FileHandler();
+    public static final GUI GUI = new GUI();
     public static void main(String[] args) {
-        GUI gui = new GUI();
-        //Network network = new Network(0.01, 100, 1024, 62);
-        //network.train();
+        if(Files.exists(Paths.get("network.ser"))) {
+            try (FileInputStream fileInputStream = new FileInputStream("network.ser")) {
+                ObjectInputStream inputStream = new ObjectInputStream(fileInputStream);
+                NETWORK = (Network) inputStream.readObject();
+                inputStream.close();
+            } catch (IOException | ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            NETWORK.train();
+        }
     }
 }

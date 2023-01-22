@@ -1,7 +1,9 @@
 package network;
 
-public class Function {
-    public enum FunctionTag {
+import java.io.Serializable;
+
+public class Function implements Serializable {
+    public enum FunctionTag implements Serializable {
         SIGMOID,
         RELU,
         LEAKY_RELU,
