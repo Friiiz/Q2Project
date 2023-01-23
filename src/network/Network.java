@@ -72,6 +72,10 @@ public class Network implements Serializable {
         System.out.println("All nodes connected.");
     }
 
+    /**
+     * @param trainingData The data to be shuffled.
+     * @return The shuffled data.
+     */
     public LinkedHashMap<double[], Character> shuffleTrainingData(LinkedHashMap<double[], Character> trainingData) {
         //shuffle data
         System.out.println("Shuffling data...");
@@ -89,11 +93,13 @@ public class Network implements Serializable {
         return trainingData;
     }
 
+    /**
+     * Train the network.
+     */
     public void train() {
-
         //load files
         try {
-            FILE_HANDLER.loadFiles();
+            FILE_HANDLER.loadFiles(new File("C:\\Users\\Friiiz\\Documents\\NIST Handwritten Forms and Characters Database"));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -147,6 +153,7 @@ public class Network implements Serializable {
                         highestSuccessRate = successRate;
                     }
 
+                    //save prematurely to avoid  unlearning
                     if (successRate > 0.5) {
                         save(successRate, totalPairs / BATCH_SIZE, i + 1);
                         return;
@@ -158,6 +165,12 @@ public class Network implements Serializable {
         }
     }
 
+    /**
+     * Saves the network to a file.
+     * @param successRate The success rate at the time of saving.
+     * @param batches The number of batch evaluated at the time of saving.
+     * @param epochs The number of epochs gone through at the time of saving.
+     */
     private void save(double successRate, int batches, int epochs) {
         try (FileOutputStream fileOutputStream = new FileOutputStream("network.ser")) {
             ObjectOutputStream outputStream = new ObjectOutputStream(fileOutputStream);
@@ -172,6 +185,10 @@ public class Network implements Serializable {
         }
     }
 
+    /**
+     * Computes the activations for the whole network for the given input.
+     * @param image The input image.
+     */
     public void compute(double[] image) {
         //setting values for all nodes in input layer
         Neuron[] layer = LAYERS[0];
@@ -197,6 +214,10 @@ public class Network implements Serializable {
         }
     }
 
+    /**
+     * Propagate parameters backwards through network.
+     * @param label The correct label of the current input image.
+     */
     public void backPropagate(char label) {
         //calculate gradients for output layer
         for (Neuron neuron : LAYERS[LAYERS.length - 1]) {
@@ -217,9 +238,60 @@ public class Network implements Serializable {
         }
     }
 
+    /**
+     * @param image The image to be evaluated.
+     * @return The label and the certainty the network computed for the input image.
+     */
     public Map.Entry<Character, Double> evaluate(double[] image) {
         compute(image);
         Neuron maxValue = Arrays.stream(LAYERS[LAYERS.length - 1]).max(Comparator.comparing(Neuron::getActivation)).orElseThrow();
-        return new AbstractMap.SimpleEntry<Character, Double>(maxValue.getNodeLabel(), maxValue.getActivation());
+        return new AbstractMap.SimpleEntry<>(maxValue.getNodeLabel(), maxValue.getActivation());
     }
+
+    //public void test() {
+    //    try {
+    //        FILE_HANDLER.loadFiles(new File(""));
+    //    } catch (InterruptedException e) {
+    //        e.printStackTrace();
+    //    }
+//
+    //    LinkedHashMap<double[], Character> testData = shuffleTrainingData(FILE_HANDLER.getTrainingData());
+//
+    //    //training network
+    //    System.out.println("Training network.");
+    //    int totalPairs = 0;
+    //    int successfulPairs = 0;
+    //    double successRate = 0;
+    //    double highestSuccessRate = 0;
+//
+    //    int i = 0;
+    //    for (Map.Entry<double[], Character> testPair : testData.entrySet()) {
+//
+    //        //computing output
+    //        compute(testPair.getKey());
+//
+    //        //finding the highest value in output layer
+    //        Neuron maxValue = Arrays.stream(LAYERS[LAYERS.length - 1]).max(Comparator.comparing(Neuron::getActivation)).orElseThrow();
+//
+    //        //track success
+    //        totalPairs++;
+    //        if (maxValue.getNodeLabel() == testPair.getValue()) {
+    //            successfulPairs++;
+    //        }
+//
+    //        //calculating success rate
+    //        successRate = (double) successfulPairs / (double) totalPairs;
+    //        if(successRate > highestSuccessRate) {
+    //            highestSuccessRate = successRate;
+    //        }
+//
+    //        if (successRate > 0.5) {
+    //            save(successRate, totalPairs / BATCH_SIZE, i + 1);
+    //            return;
+    //        }
+//
+    //        i ++;
+    //        System.out.println("Success rate: " + successRate * 100 + "%");
+    //    }
+    //}
 }

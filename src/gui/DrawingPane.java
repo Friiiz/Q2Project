@@ -29,29 +29,34 @@ public class DrawingPane extends JPanel implements MouseListener, MouseMotionLis
     private MouseEvent mousePositionEvent;
 
     public DrawingPane() {
-        //setPreferredSize(new Dimension(width, height));
         addMouseListener(this);
         addMouseMotionListener(this);
         setFocusable(true);
         grabFocus();
         setFocusTraversalKeysEnabled(false);
         setBackground(Color.WHITE);
-        DRAWING_RESOLUTION = 0;
+        DRAWING_RESOLUTION = 1;
         STROKE_WIDTH = 10;
         DRAWN_STROKES = new LinkedList<>();
         leftClickPressed = false;
     }
 
     public static final int MIN_MAX_NORMALIZATION = 1;
+
+    @Deprecated
     public static final int Z_SCORE_NORMALIZATION = 2;
 
+    /**
+     * @param regularizationAlgorithm The algorithm to be used for the regularization.
+     * @return A regularized version of the image on this panel .
+     */
     public BufferedImage getRegularizedImage(int regularizationAlgorithm) {
 
         if(DRAWN_STROKES.isEmpty()) {
             return null;
         }
 
-        final double PADDING = 0;
+        final double PADDING = 50;
         final double X_SCALE_FACTOR = getWidth() - 2 * PADDING;
         final double Y_SCALE_FACTOR = getHeight() - 2 * PADDING;
 
@@ -65,24 +70,23 @@ public class DrawingPane extends JPanel implements MouseListener, MouseMotionLis
         }
 
         if(regularizationAlgorithm == MIN_MAX_NORMALIZATION) {
-            //FIXME: center regularized image
             //apply min-max normalization
             double maxX = DRAWN_STROKES.stream().mapToDouble(stroke -> stroke.stream().mapToDouble(point -> point.x).max().orElseThrow()).max().orElseThrow();
             double minX = DRAWN_STROKES.stream().mapToDouble(stroke -> stroke.stream().mapToDouble(point -> point.x).min().orElseThrow()).min().orElseThrow();
             double maxY = DRAWN_STROKES.stream().mapToDouble(stroke -> stroke.stream().mapToDouble(point -> point.y).max().orElseThrow()).max().orElseThrow();
             double minY = DRAWN_STROKES.stream().mapToDouble(stroke -> stroke.stream().mapToDouble(point -> point.y).min().orElseThrow()).min().orElseThrow();
 
+            //calculate the max and min coordinates of the points
             double absoluteMax = Math.max(maxX, maxY);
-            double maxDifference = Math.abs(maxX - maxY);
             double absoluteMin = Math.min(minX, minY);
-            double minDifference = Math.abs(minX - minY);
 
+            //shift every point accordingly
             for (LinkedList<Point2D.Double> stroke : DRAWN_STROKES) {
                 for (Point2D.Double point : stroke) {
                     point.setLocation(((point.x - absoluteMin) / (absoluteMax - absoluteMin)) * X_SCALE_FACTOR + PADDING / 2, ((point.y - absoluteMin) / (absoluteMax - absoluteMin)) * Y_SCALE_FACTOR + PADDING);
                 }
             }
-        } else if (regularizationAlgorithm == Z_SCORE_NORMALIZATION) {
+        } else if (regularizationAlgorithm == Z_SCORE_NORMALIZATION) { //not working
             double meanX = DRAWN_STROKES.stream().mapToDouble(stroke -> stroke.stream().mapToDouble(point -> point.x).sum()).sum() / DRAWN_STROKES.stream().mapToDouble(LinkedList::size).sum();
             double standardDeviationX = Math.sqrt(DRAWN_STROKES.stream().mapToDouble(stroke -> stroke.stream().mapToDouble(point -> (point.x - meanX) * (point.x - meanX)).sum()).sum());
             double meanY = DRAWN_STROKES.stream().mapToDouble(stroke -> stroke.stream().mapToDouble(point -> point.y).sum()).sum() / DRAWN_STROKES.stream().mapToDouble(LinkedList::size).sum();
@@ -97,17 +101,13 @@ public class DrawingPane extends JPanel implements MouseListener, MouseMotionLis
             throw new IllegalArgumentException(regularizationAlgorithm + " is not a valid regularization algorithm.");
         }
 
+        //print the points to an image
         BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
         Graphics2D g = image.createGraphics();
         printAll(g);
         g.dispose();
 
-        //try {
-        //    ImageIO.write(image, "png", new File("test.png"));
-        //} catch (IOException e) {
-        //    e.printStackTrace();
-        //}
-
+        //reset the points on the panel to revert regularization
         DRAWN_STROKES.clear();
         DRAWN_STROKES.addAll(drawnStrokesBackup);
         repaint();
@@ -155,7 +155,6 @@ public class DrawingPane extends JPanel implements MouseListener, MouseMotionLis
         if (e.getButton() == MouseEvent.BUTTON1) {
             leftClickPressed = true;
 
-
             Runnable drawingRunnable = () -> {
                 if(mousePositionEvent == null) {
                     mousePositionEvent = e;
@@ -198,6 +197,7 @@ public class DrawingPane extends JPanel implements MouseListener, MouseMotionLis
 
         mousePositionEvent = null;
 
+        //update GUI whenever input changes
         Main.GUI.updatePrediction();
     }
 

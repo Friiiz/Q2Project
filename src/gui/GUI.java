@@ -15,9 +15,6 @@ public class GUI {
     JFrame frame;
     DrawingPane drawingPane;
 
-    public static final int SCREEN_WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
-    public static final int SCREEN_HEIGHT = (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight();
-
     private JLabel regularizedImage;
     private JLabel detectedCharacterLabel;
 
@@ -83,6 +80,9 @@ public class GUI {
         frame.setVisible(true);
     }
 
+    /**
+     * Updates the GUI to show the info for the current input on the drawing panel.
+     */
     public void updatePrediction() {
         BufferedImage regularizedInputImage = drawingPane.getRegularizedImage(MIN_MAX_NORMALIZATION);
         if(regularizedInputImage != null) {

@@ -25,6 +25,7 @@ public class Main {
     public static final FileHandler FILE_HANDLER = new FileHandler();
     public static final GUI GUI = new GUI();
     public static void main(String[] args) {
+        //loads the network from a file if it has been saved before otherwise trains it
         if(Files.exists(Paths.get("network.ser"))) {
             try (FileInputStream fileInputStream = new FileInputStream("network.ser")) {
                 ObjectInputStream inputStream = new ObjectInputStream(fileInputStream);
@@ -36,5 +37,7 @@ public class Main {
         } else {
             NETWORK.train();
         }
+
+        //NETWORK.test();
     }
 }

@@ -26,14 +26,16 @@ public class FileHandler {
 
     public static final int BILINEAR_INTERPOLATION = 0;
     public static final int WEIGHTED_BILINEAR_INTERPOLATION = 1;
-    public static final int LANCZOS_RESAMPLING = 2;
 
-
-    public void loadFiles() throws InterruptedException {
+    /**
+     * Loads all the files from the given path into {@link filehandling.FileHandler#TRAINING_DATA}.
+     * @param database The path to be loaded from.
+     * @throws InterruptedException if one of the threads loading the files throws {@link InterruptedException}
+     */
+    public void loadFiles(File database) throws InterruptedException {
         System.out.println("Loading and compressing data...");
 
         //iterating over all sub-folders of the database folder
-        File database = new File("C:\\Users\\Friiiz\\Documents\\NIST Handwritten Forms and Characters Database");
         for (File folder : Objects.requireNonNull(database.listFiles(), "No folders found in " + database.getAbsolutePath())) {
 
             //creating a thread for each sub-folder that loads all the images
@@ -57,23 +59,38 @@ public class FileHandler {
                 }
                 System.out.println("File loader thread " + Thread.currentThread().getName() + " terminated.");
             };
+
+            //create a thread from the runnable and start it
             Thread fileLoaderThread = new Thread(fileLoader, String.valueOf((char) Integer.parseInt(folder.getName(), 16)));
             fileLoaderThread.start();
+
             System.out.println("File loader thread " + fileLoaderThread.getName() + " started.");
+
             THREADS.add(fileLoaderThread);
         }
+
+        //join all the threads to make sure all files have been loaded before continuing
         for (Thread thread : THREADS) {
             thread.join();
         }
+
         allFilesLoaded = true;
         System.out.println("Number of files loaded: " + TRAINING_DATA.size());
     }
 
+    /**
+     * @return The training data if all files have been loaded.
+     */
     public LinkedHashMap<double[], Character> getTrainingData() {
         if (!allFilesLoaded) throw new IllegalStateException("The files have not been fully loaded.");
         return new LinkedHashMap<>(TRAINING_DATA);
     }
 
+    /**
+     * @param image The image to be compressed.
+     * @param downscalingAlgorithm The algorithm to be used when downscaling.
+     * @return The given image compressed to 32x32 greyscale represented as a double array.
+     */
     public double[] getCompressedImage(BufferedImage image, int downscalingAlgorithm) {
         final int IMAGE_RESOLUTION = 32;
         final double SCALE_FACTOR = (double) Math.max(image.getHeight(), image.getWidth()) / IMAGE_RESOLUTION; //TODO: not nice; rather make sure images from panel are square
@@ -99,15 +116,6 @@ public class FileHandler {
                 }
             }
         }
-
-        //BufferedImage tempBufferedImage = new BufferedImage(IMAGE_RESOLUTION, IMAGE_RESOLUTION, BufferedImage.TYPE_BYTE_GRAY);
-        //Graphics2D tempGraphics = tempBufferedImage.createGraphics();
-        //BufferedImage subImage = image.getSubimage(minX, minY, image.getWidth() - maxX, image.getHeight() - maxY);
-        //Image tempImage = subImage.getScaledInstance(IMAGE_RESOLUTION, IMAGE_RESOLUTION, Image.SCALE_SMOOTH);
-        //tempGraphics.drawImage(tempImage, 0, 0, null);
-        //tempGraphics.dispose();
-//
-        //image = tempBufferedImage;
 
         //compress image to specified resolution
         double[] compressedImage = new double[IMAGE_RESOLUTION * IMAGE_RESOLUTION];
@@ -152,22 +160,8 @@ public class FileHandler {
                 }
             }
 
-            case LANCZOS_RESAMPLING -> {
-                //TODO: try this ↑
-            }
-
             default -> throw new IllegalStateException("Unexpected value: " + downscalingAlgorithm);
         }
-
-        //if(!imageSaved[0]) {
-        //    try {
-        //        File outputFile = new File("saved.png");
-        //        ImageIO.write(image, "png", outputFile);
-        //        imageSaved[0] = true;
-        //    } catch (IOException e) {
-        //        e.printStackTrace();
-        //    }
-        //}
 
         return compressedImage;
     }

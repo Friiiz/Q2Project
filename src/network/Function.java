@@ -2,7 +2,14 @@ package network;
 
 import java.io.Serializable;
 
+/**
+ * Handles functions ({@link network.Function#compute(double)}) and their derivatives ({@link network.Function#computeDerivative(double)}).
+ */
 public class Function implements Serializable {
+
+    /**
+     * Represents the possible functions that an instance of this class can compute.
+     */
     public enum FunctionTag implements Serializable {
         SIGMOID,
         RELU,
@@ -17,8 +24,14 @@ public class Function implements Serializable {
         SHIFTED_LEAKY_RELU
     }
 
+    /**
+     * Array of the parameters for the function used in this instance.
+     */
     private final double[] PARAMETERS;
 
+    /**
+     * Tag that indicates the function used in this instance.
+     */
     private final FunctionTag FUNCTION_TAG;
 
     public Function(FunctionTag functionTag, double... parameters) {
@@ -83,6 +96,10 @@ public class Function implements Serializable {
         }
     }
 
+    /**
+     * @param x The input to the function.
+     * @return f(x) for the function used in this instance.
+     */
     public double compute(double x) {
         return switch (FUNCTION_TAG) {
             case SIGMOID -> sigmoid(x);
@@ -99,6 +116,10 @@ public class Function implements Serializable {
         };
     }
 
+    /**
+     * @param x The input to the function.
+     * @return f'(x) for the function used in this instance.
+     */
     public double computeDerivative(double x) {
         return switch (FUNCTION_TAG) {
             case SIGMOID -> sigmoidDerivative(x);
