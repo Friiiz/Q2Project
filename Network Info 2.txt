@@ -1,0 +1,3 @@
+Network Info:
+Average success rate (fluctuates a lot for individual characters): 50.000521920668064%
+Trained for 5748 batches in 1 epochs.

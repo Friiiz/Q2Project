@@ -1,7 +1,6 @@
 package filehandling;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -94,8 +93,6 @@ public class FileHandler {
     public double[] getCompressedImage(BufferedImage image, int downscalingAlgorithm) {
         final int IMAGE_RESOLUTION = 32;
         final double SCALE_FACTOR = (double) Math.max(image.getHeight(), image.getWidth()) / IMAGE_RESOLUTION; //TODO: not nice; rather make sure images from panel are square
-
-        final boolean[] imageSaved = {false};
 
         //convert image to byte array
         byte[][] uncompressed = new byte[image.getWidth()][image.getHeight()];

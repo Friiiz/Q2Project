@@ -1,7 +1,6 @@
 package network;
 
 import java.io.*;
-import java.rmi.server.LogStream;
 import java.util.*;
 
 import static main.Main.FILE_HANDLER;
@@ -19,7 +18,7 @@ public class Network implements Serializable {
             if (l == 0) {
                 //creating input layer
                 Neuron[] inputLayerNeurons = new Neuron[inputLayerSize];
-                Arrays.setAll(inputLayerNeurons, node -> new Neuron(Neuron.NodeType.INPUT, null, BATCH_SIZE));
+                Arrays.setAll(inputLayerNeurons, node -> new Neuron(Neuron.NodeType.INPUT, null));
                 LAYERS[l] = inputLayerNeurons;
                 System.out.println("Input layer created with " + inputLayerSize + " nodes.");
                 continue;
@@ -30,19 +29,19 @@ public class Network implements Serializable {
                 int nodeIndex = 0;
                 //adding nodes for numbers
                 for (int i = 48; i <= 57; i++) {
-                    outputLayerNeurons[nodeIndex] = new Neuron(Neuron.NodeType.OUTPUT, (char) i, BATCH_SIZE);
+                    outputLayerNeurons[nodeIndex] = new Neuron(Neuron.NodeType.OUTPUT, (char) i);
                     nodeIndex++;
                 }
 
                 //adding nodes for uppercase letters
                 for (int i = 65; i <= 90; i++) {
-                    outputLayerNeurons[nodeIndex] = new Neuron(Neuron.NodeType.OUTPUT, (char) i, BATCH_SIZE);
+                    outputLayerNeurons[nodeIndex] = new Neuron(Neuron.NodeType.OUTPUT, (char) i);
                     nodeIndex++;
                 }
 
                 //adding nodes for lowercase letters
                 for (int i = 97; i <= 122; i++) {
-                    outputLayerNeurons[nodeIndex] = new Neuron(Neuron.NodeType.OUTPUT, (char) i, BATCH_SIZE);
+                    outputLayerNeurons[nodeIndex] = new Neuron(Neuron.NodeType.OUTPUT, (char) i);
                     nodeIndex++;
                 }
 
@@ -53,7 +52,7 @@ public class Network implements Serializable {
 
             //creating hidden layers
             Neuron[] hiddenLayerNeurons = new Neuron[hiddenLayerSizes[l - 1]];
-            Arrays.setAll(hiddenLayerNeurons, node -> new Neuron(Neuron.NodeType.HIDDEN, null, BATCH_SIZE));
+            Arrays.setAll(hiddenLayerNeurons, node -> new Neuron(Neuron.NodeType.HIDDEN, null));
             LAYERS[l] = hiddenLayerNeurons;
             System.out.println("Hidden layer created with " + hiddenLayerSizes[l - 1] + " nodes.");
         }
@@ -99,7 +98,7 @@ public class Network implements Serializable {
     public void train() {
         //load files
         try {
-            FILE_HANDLER.loadFiles(new File("C:\\Users\\Friiiz\\Documents\\NIST Handwritten Forms and Characters Database"));
+            FILE_HANDLER.loadFiles(new File("C:\\Users\\Friiiz\\Documents\\NIST Handwritten Forms and Characters Database Training Images"));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -109,7 +108,7 @@ public class Network implements Serializable {
         System.out.println("Training network.");
         int totalPairs = 0;
         int successfulPairs = 0;
-        double successRate = 0;
+        double successRate;
         double highestSuccessRate = 0;
 
         //looping through epochs
@@ -137,7 +136,7 @@ public class Network implements Serializable {
                     for (Neuron[] layer : LAYERS) {
                         for (Neuron neuron : layer) {
                             //nudge parameters
-                            neuron.nudgeWeights(LEARNING_RATE/* * (1 + Math.pow(2, 0.00012 * totalPairs))*/);
+                            neuron.nudgeWeights(LEARNING_RATE);
                             neuron.nudgeBias(LEARNING_RATE);
                             //neuron.nudgeBeta(LEARNING_RATE);
                             //neuron.nudgeGamma(LEARNING_RATE);
@@ -248,50 +247,42 @@ public class Network implements Serializable {
         return new AbstractMap.SimpleEntry<>(maxValue.getNodeLabel(), maxValue.getActivation());
     }
 
-    //public void test() {
-    //    try {
-    //        FILE_HANDLER.loadFiles(new File(""));
-    //    } catch (InterruptedException e) {
-    //        e.printStackTrace();
-    //    }
-//
-    //    LinkedHashMap<double[], Character> testData = shuffleTrainingData(FILE_HANDLER.getTrainingData());
-//
-    //    //training network
-    //    System.out.println("Training network.");
-    //    int totalPairs = 0;
-    //    int successfulPairs = 0;
-    //    double successRate = 0;
-    //    double highestSuccessRate = 0;
-//
-    //    int i = 0;
-    //    for (Map.Entry<double[], Character> testPair : testData.entrySet()) {
-//
-    //        //computing output
-    //        compute(testPair.getKey());
-//
-    //        //finding the highest value in output layer
-    //        Neuron maxValue = Arrays.stream(LAYERS[LAYERS.length - 1]).max(Comparator.comparing(Neuron::getActivation)).orElseThrow();
-//
-    //        //track success
-    //        totalPairs++;
-    //        if (maxValue.getNodeLabel() == testPair.getValue()) {
-    //            successfulPairs++;
-    //        }
-//
-    //        //calculating success rate
-    //        successRate = (double) successfulPairs / (double) totalPairs;
-    //        if(successRate > highestSuccessRate) {
-    //            highestSuccessRate = successRate;
-    //        }
-//
-    //        if (successRate > 0.5) {
-    //            save(successRate, totalPairs / BATCH_SIZE, i + 1);
-    //            return;
-    //        }
-//
-    //        i ++;
-    //        System.out.println("Success rate: " + successRate * 100 + "%");
-    //    }
-    //}
+    @Deprecated
+    public void test() {
+        try {
+            FILE_HANDLER.loadFiles(new File("C:\\Users\\Friiiz\\Documents\\NIST Handwritten Forms and Characters Database Test Images"));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        LinkedHashMap<double[], Character> testData = shuffleTrainingData(FILE_HANDLER.getTrainingData());
+        //training network
+        System.out.println("Training network.");
+        int totalPairs = 0;
+        int successfulPairs = 0;
+        double successRate;
+        double highestSuccessRate = 0;
+        int i = 0;
+        for (Map.Entry<double[], Character> testPair : testData.entrySet()) {
+            //computing output
+            compute(testPair.getKey());
+            //finding the highest value in output layer
+            Neuron maxValue = Arrays.stream(LAYERS[LAYERS.length - 1]).max(Comparator.comparing(Neuron::getActivation)).orElseThrow();
+            //track success
+            totalPairs++;
+            if (maxValue.getNodeLabel() == testPair.getValue()) {
+                successfulPairs++;
+            }
+            //calculating success rate
+            successRate = (double) successfulPairs / (double) totalPairs;
+            if(successRate > highestSuccessRate) {
+                highestSuccessRate = successRate;
+            }
+            if (successRate > 0.5) {
+                save(successRate, totalPairs / BATCH_SIZE, i + 1);
+                return;
+            }
+            i ++;
+            System.out.println("Success rate: " + successRate * 100 + "%");
+        }
+    }
 }

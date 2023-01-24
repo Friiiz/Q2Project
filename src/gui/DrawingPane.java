@@ -1,10 +1,7 @@
 package gui;
 
-import filehandling.FileHandler;
 import main.Main;
-import network.Neuron;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -16,9 +13,6 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.LinkedList;
 import java.util.List;
-
-import static main.Main.FILE_HANDLER;
-import static main.Main.NETWORK;
 
 public class DrawingPane extends JPanel implements MouseListener, MouseMotionListener {
 
@@ -42,9 +36,6 @@ public class DrawingPane extends JPanel implements MouseListener, MouseMotionLis
     }
 
     public static final int MIN_MAX_NORMALIZATION = 1;
-
-    @Deprecated
-    public static final int Z_SCORE_NORMALIZATION = 2;
 
     /**
      * @param regularizationAlgorithm The algorithm to be used for the regularization.
@@ -84,17 +75,6 @@ public class DrawingPane extends JPanel implements MouseListener, MouseMotionLis
             for (LinkedList<Point2D.Double> stroke : DRAWN_STROKES) {
                 for (Point2D.Double point : stroke) {
                     point.setLocation(((point.x - absoluteMin) / (absoluteMax - absoluteMin)) * X_SCALE_FACTOR + PADDING / 2, ((point.y - absoluteMin) / (absoluteMax - absoluteMin)) * Y_SCALE_FACTOR + PADDING);
-                }
-            }
-        } else if (regularizationAlgorithm == Z_SCORE_NORMALIZATION) { //not working
-            double meanX = DRAWN_STROKES.stream().mapToDouble(stroke -> stroke.stream().mapToDouble(point -> point.x).sum()).sum() / DRAWN_STROKES.stream().mapToDouble(LinkedList::size).sum();
-            double standardDeviationX = Math.sqrt(DRAWN_STROKES.stream().mapToDouble(stroke -> stroke.stream().mapToDouble(point -> (point.x - meanX) * (point.x - meanX)).sum()).sum());
-            double meanY = DRAWN_STROKES.stream().mapToDouble(stroke -> stroke.stream().mapToDouble(point -> point.y).sum()).sum() / DRAWN_STROKES.stream().mapToDouble(LinkedList::size).sum();
-            double standardDeviationY = Math.sqrt(DRAWN_STROKES.stream().mapToDouble(stroke -> stroke.stream().mapToDouble(point -> (point.y - meanY) * (point.y - meanY)).sum()).sum());
-
-            for (LinkedList<Point2D.Double> stroke : DRAWN_STROKES) {
-                for (Point2D.Double point : stroke) {
-                    point.setLocation(((point.x - meanX) / standardDeviationX) * X_SCALE_FACTOR + PADDING, ((point.y - meanY) / standardDeviationY) * Y_SCALE_FACTOR + PADDING);
                 }
             }
         } else {
@@ -164,8 +144,6 @@ public class DrawingPane extends JPanel implements MouseListener, MouseMotionLis
                 int mouseX = mousePositionEvent.getX();
                 int mouseY = mousePositionEvent.getY();
                 DRAWN_STROKES.add(new LinkedList<>(List.of(new Point2D.Double(mousePositionEvent.getX(), mousePositionEvent.getY()))));
-
-                System.out.println("thread created");
 
                 //when holding add new point to current stroke whenever mouse moves by drawing resolution
                 while (leftClickPressed) {

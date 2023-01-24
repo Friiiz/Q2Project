@@ -32,7 +32,7 @@ public class Neuron implements Serializable {
     private double standardDeviation;
     private final Function ACTIVATION_FUNCTION;
 
-    public Neuron(NodeType nodeType, Character nodeLabel, int batchSize) {
+    public Neuron(NodeType nodeType, Character nodeLabel) {
         NODE_TYPE = nodeType;
         NODE_LABEL = nodeLabel;
         INPUTS = new LinkedHashMap<>();
@@ -73,12 +73,12 @@ public class Neuron implements Serializable {
         BATCH_ACTIVATIONS.add(activation);
     }
 
-    @Deprecated(since = "Implementation of the cross entropy cost function", forRemoval = false)
+    @Deprecated(since = "Implementation of the cross entropy cost function")
     public double meanSquaredError(double expectedActivation) {
         return (activation - expectedActivation) * (activation - expectedActivation);
     }
 
-    @Deprecated(since = "Implementation of the cross entropy cost function", forRemoval = false)
+    @Deprecated(since = "Implementation of the cross entropy cost function")
     public double meanSquaredErrorDerivative(double expectedActivation) {
         return 2 * (activation - expectedActivation);
     }
@@ -170,7 +170,6 @@ public class Neuron implements Serializable {
     public void addBetaGradient(double expectedActivation) {
         setScaledShiftedNormalizedActivation();
         if (expectedActivation == -1) {
-            //FIXME: couldn't figure out how to compute partial derivative for hidden layers
             expectedActivation = OUTPUTS.stream().mapToDouble(neuron -> neuron.INPUTS.entrySet().stream().filter(n -> n.getKey() == this).findAny().orElseThrow().getKey().weightedInputSum /
                     neuron.INPUTS.entrySet().stream().filter(n -> n.getKey() == this).findAny().orElseThrow().getValue()).sum() / OUTPUTS.size();
         }
@@ -181,7 +180,6 @@ public class Neuron implements Serializable {
     public void addGammaGradient(double expectedActivation) {
         setScaledShiftedNormalizedActivation();
         if (expectedActivation == -1) {
-            //FIXME: couldn't figure out how to compute partial derivative for hidden layers
             expectedActivation = OUTPUTS.stream().mapToDouble(neuron -> neuron.INPUTS.entrySet().stream().filter(n -> n.getKey() == this).findAny().orElseThrow().getKey().weightedInputSum /
                     neuron.INPUTS.entrySet().stream().filter(n -> n.getKey() == this).findAny().orElseThrow().getValue()).sum() / OUTPUTS.size();
         }
